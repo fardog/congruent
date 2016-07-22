@@ -1,0 +1,55 @@
+{
+  "_global": {
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "authentication": {
+      "type": "basic",
+      "username": "username",
+      "password": "password"
+    }
+  },
+  "servers": [
+    {
+      "base_uri": "http://example.local/",
+      "headers": {
+        "Arbitrary-Header": "some-value"
+      }
+    },
+    {
+      "base_uri": "https://example2.local/"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/api/v1/resource",
+      "method": "POST",
+      "body": {
+        "id": "abc123",
+        "name": "Milly Yamaguchi"
+      },
+      "expect": {
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 201,
+        "body": {
+          "ok": true,
+          "resource": {
+            "id": "abc123",
+            "name": "Milly Yamaguchi",
+            "created": "%%ignore%%"
+          }
+        }
+      }
+    },
+    {
+      "path": "/api/v1/resource/abc123",
+      "method": "DELETE",
+      "expect": {
+        "status": 204,
+        "body": null
+      }
+    }
+  ]
+}
