@@ -1,0 +1,20 @@
+{
+  "servers": [
+    {
+      "base_uri": "https://mkwords.fardog.io/api/v1"
+    },
+    {
+      "base_uri": "http://localhost:3000/api/v1"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/generate",
+      "method": "GET"
+    },
+    {
+      "path": "/generate?num-words=7&min-chars=10&max-chars=20",
+      "method": "GET"
+    }
+  ]
+}
