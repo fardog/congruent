@@ -6,6 +6,8 @@ import (
 
 	"fmt"
 	"github.com/fardog/congruent"
+	"os"
+	"text/tabwriter"
 )
 
 var files []string
@@ -34,19 +36,28 @@ func main() {
 		configs[i] = config
 	}
 
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 0, 8, 2, '\t', 0)
+
 	for _, c := range configs {
 		servers := c.ResolvedServerConfigs()
 
 		for _, r := range c.Requests {
+
 			for _, s := range servers {
 				req := congruent.NewRequest(s, r)
-				body, err := req.Do()
+				resp, err := req.Do()
 				if err != nil {
 					fmt.Println(err)
 					continue
 				}
-				fmt.Printf("%s: %s\n", req.URI, body)
+				fmt.Fprintf(w, "URL: %s\tStatus: %d\n", req.URI, resp.StatusCode)
+				fmt.Fprintf(w, "%s\n\n", resp.Body)
 			}
 		}
+	}
+
+	if err := w.Flush(); err != nil {
+		panic(err)
 	}
 }

@@ -24,13 +24,6 @@ type Request struct {
 	body    []byte
 }
 
-// Response represents a response from a server
-type Response struct {
-	Headers    HeadersDef
-	Body       []byte
-	StatusCode int
-}
-
 // SetBody sets the body for a Request; can take a string, or any object which
 // is treated as though it were JSON. TODO(nwittstock): support other things
 func (r *Request) SetBody(b interface{}) error {
@@ -55,7 +48,7 @@ func (r Request) Body() []byte {
 }
 
 // Do performs a Request and returns a Response
-func (r Request) Do() (interface{}, error) {
+func (r Request) Do() (*Response, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest(r.Method, r.URI, nil)
 	if err != nil {
@@ -77,5 +70,12 @@ func (r Request) Do() (interface{}, error) {
 		return nil, err
 	}
 
-	return body, nil
+	return &Response{resp.Header, body, resp.StatusCode}, nil
+}
+
+// Response represents a response from a server
+type Response struct {
+	Headers    http.Header
+	Body       []byte
+	StatusCode int
 }
