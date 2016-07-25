@@ -6,7 +6,6 @@ import (
 
 	"fmt"
 	"github.com/fardog/congruent"
-	"github.com/imdario/mergo"
 )
 
 var files []string
@@ -36,26 +35,15 @@ func main() {
 	}
 
 	for _, c := range configs {
-		var servers congruent.ServerDefs
-
-		for _, s := range c.Servers {
-			gr := c.Global
-			if err := mergo.MergeWithOverwrite(&gr, s); err != nil {
-				panic(err)
-			}
-
-			servers = append(servers, gr)
-		}
+		servers := c.ResolvedServerConfigs()
 
 		for _, r := range c.Requests {
 			for _, s := range servers {
-				req := congruent.NewRequest(
-					r.Method, s.BaseURI+r.Path, s.Headers,
-				)
+				req := congruent.NewRequest(s, r)
 				body, err := req.Do()
 				if err != nil {
 					fmt.Println(err)
-					return
+					continue
 				}
 				fmt.Printf("%s: %s\n", req.URI, body)
 			}

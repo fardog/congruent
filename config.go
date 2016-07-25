@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/imdario/mergo"
 )
 
 // HeadersDef represents HTTP header key/value pairs
@@ -49,13 +50,6 @@ type RequestDef struct {
 // RequestDefs is an array of Request objects
 type RequestDefs []RequestDef
 
-// Config represents a whole configuration for a job
-type Config struct {
-	Global   ServerDef   `json:"_global"`
-	Servers  ServerDefs  `json:"servers"`
-	Requests RequestDefs `json:"requests"`
-}
-
 // NewConfigFromJSON loads configuration data from a []byte of JSON data
 func NewConfigFromJSON(data []byte) (*Config, error) {
 	config := &Config{}
@@ -65,4 +59,28 @@ func NewConfigFromJSON(data []byte) (*Config, error) {
 	}
 
 	return config, nil
+}
+
+// Config represents a whole configuration for a job
+type Config struct {
+	Global   ServerDef   `json:"_global"`
+	Servers  ServerDefs  `json:"servers"`
+	Requests RequestDefs `json:"requests"`
+}
+
+// ResolvedServerConfigs returns all server configs, merged with the Global
+// configuration to make "whole" ServerDef objects
+func (c Config) ResolvedServerConfigs() ServerDefs {
+	var servers ServerDefs
+
+	for _, s := range c.Servers {
+		gr := c.Global
+		if err := mergo.MergeWithOverwrite(&gr, s); err != nil {
+			panic(err)
+		}
+
+		servers = append(servers, gr)
+	}
+
+	return servers
 }

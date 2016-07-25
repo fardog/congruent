@@ -6,10 +6,17 @@ import (
 	"net/http"
 )
 
-func NewRequest(m, uri string, h HeadersDef) *Request {
-	return &Request{m, uri, h, nil}
+// NewRequest creates a request given a RequestDef and a ServerDef
+func NewRequest(sd ServerDef, rd RequestDef) *Request {
+	return &Request{
+		rd.Method,
+		sd.BaseURI + rd.Path, // TODO(nwittstock): join as a URL properly
+		sd.Headers,
+		nil,
+	}
 }
 
+// Request represents a request to be made against a server
 type Request struct {
 	Method  string
 	URI     string
@@ -17,6 +24,15 @@ type Request struct {
 	body    []byte
 }
 
+// Response represents a response from a server
+type Response struct {
+	Headers    HeadersDef
+	Body       []byte
+	StatusCode int
+}
+
+// SetBody sets the body for a Request; can take a string, or any object which
+// is treated as though it were JSON. TODO(nwittstock): support other things
 func (r *Request) SetBody(b interface{}) error {
 	switch b.(type) {
 	case string:
@@ -33,10 +49,12 @@ func (r *Request) SetBody(b interface{}) error {
 
 }
 
+// Body retrieves the request body that's been set
 func (r Request) Body() []byte {
 	return r.body
 }
 
+// Do performs a Request and returns a Response
 func (r Request) Do() (interface{}, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest(r.Method, r.URI, nil)
