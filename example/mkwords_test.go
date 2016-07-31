@@ -34,6 +34,11 @@ func TestGenerate(t *testing.T) {
 		t.Error(err)
 	}
 
+	if err := responses.HeaderEqual(
+		"content-type", "application/json; charset=utf-8"); err != nil {
+		t.Error(err)
+	}
+
 	for _, resp := range responses {
 		body := GenerateResponse{}
 		if err := json.Unmarshal(resp.Body, &body); err != nil {
@@ -70,6 +75,11 @@ func TestGenerateOptions(t *testing.T) {
 	}
 
 	if err := responses.StatusEqual(200); err != nil {
+		t.Error(err)
+	}
+
+	if err := responses.HeaderEqual(
+		"content-type", "application/json; charset=utf-8"); err != nil {
 		t.Error(err)
 	}
 
