@@ -3,6 +3,8 @@ package congruent
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 )
 
 type Responses []*Response
@@ -96,4 +98,48 @@ func (r Responses) headerEqualWithArrayValue(k string, v []string) error {
 	}
 
 	return nil
+}
+
+func (r Responses) BodySame() error {
+	if len(r) < 2 {
+		return nil
+	}
+
+	for i, resp := range r[1:] {
+		if !bytesEqual(resp.Body, r[i].Body) {
+			return fmt.Errorf(
+				"%s: Expected body:\n%s...\nReceived body: \n%s...",
+				resp.Request.URL, cutBody(r[i].Body), cutBody(resp.Body))
+		}
+	}
+
+	return nil
+}
+
+func bytesEqual(b, o []byte) bool {
+	if len(b) != len(o) {
+		return false
+	}
+
+	for i, c := range b {
+		if c != o[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func cutBody(b []byte) []byte {
+	lstr := os.Getenv("CONGRUENT_MAX_DIFF")
+	l, err := strconv.Atoi(lstr)
+	if err != nil {
+		l = 76
+	}
+
+	if len(b) > l {
+		return b[:l]
+	}
+
+	return b
 }
