@@ -1,51 +1,28 @@
 package congruent
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 // Headers represents HTTP header key/value pairs
 type Headers map[string]string
 
-// AuthDef allows passing auth data which will be encoded later; this
-// can be provided in Headers, but provided here we'll do the encoding for you
-type AuthDef struct {
-	Type     string `json:"type"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-func (a AuthDef) String() string {
-	return a.BasicAuth()
-}
-
-// BasicAuth creates an authentication string suitable for use in a header
-func (a AuthDef) BasicAuth() string {
-	s := fmt.Sprintf("%s:%s", a.Username, a.Password)
-	encoded := base64.StdEncoding.EncodeToString([]byte(s))
-
-	return fmt.Sprintf("Basic %s", encoded)
-}
-
+// NewServer creates a new server definition
 func NewServer(u string, h *Headers) *Server {
 	return &Server{BaseURI: u, Headers: h}
 }
 
 // Server represents a server that will be requested against
 type Server struct {
-	BaseURI        string
-	Headers        *Headers
-	Authentication *AuthDef
+	BaseURI string
+	Headers *Headers
 }
 
-func (s *Server) SetAuth(a *AuthDef) {
-	s.Authentication = a
-}
-
+// NewRequest creates a new request to be made against a Server
 func NewRequest(m, p string, h *Headers, b interface{}) *Request {
 	return &Request{m, p, h, b}
 }
@@ -126,11 +103,16 @@ type result struct {
 	err  error
 }
 
+// Servers is an array of Server pointers
 type Servers []*Server
+
+// Requests is an array of Request pointers
 type Requests []*Request
 
+// Request makes a Request against a list of servers, and returns responses
 func (s Servers) Request(r *Request) (Responses, error) {
 	var responses Responses
+	var errors []string
 
 	results := make(chan result, 4)
 
@@ -145,6 +127,14 @@ func (s Servers) Request(r *Request) (Responses, error) {
 		result := <-results
 
 		responses = append(responses, result.resp)
+
+		if result.err != nil {
+			errors = append(errors, result.err.Error())
+		}
+	}
+
+	if len(errors) > 0 {
+		return nil, fmt.Errorf("got errors: %v", strings.Join(errors, "\t\n"))
 	}
 
 	return responses, nil

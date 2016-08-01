@@ -67,6 +67,11 @@ func (r Responses) headerEqualWithArrayValue(k string, v []string) error {
 	k = http.CanonicalHeaderKey(k)
 
 	for _, resp := range r {
+		if resp == nil || resp.Request == nil {
+			return fmt.Errorf(
+				"Failed to check; a response was missing a request. This typically " +
+					"happens when you fail to check an upstream error before an assertion")
+		}
 		url := resp.Request.URL
 
 		header := *resp.Headers
