@@ -1,6 +1,7 @@
 package congruent
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/fardog/congruent/urljoin"
@@ -35,19 +36,19 @@ type Request struct {
 
 // PrepareBody sets the body for a Request; can take a string, or any object which
 // is treated as though it were JSON. TODO(nwittstock): support other things
-func (r Request) PrepareBody() ([]byte, error) {
+func (r Request) PrepareBody() (*bytes.Buffer, error) {
 	b := r.Body
 
 	switch b.(type) {
 	case string:
-		return []byte(b.(string)), nil
+		return bytes.NewBuffer([]byte(b.(string))), nil
 	default:
 		body, err := json.Marshal(b)
 		if err != nil {
 			return nil, err
 		}
 
-		return body, nil
+		return bytes.NewBuffer(body), nil
 	}
 
 }
@@ -56,8 +57,13 @@ func (r Request) PrepareBody() ([]byte, error) {
 func (r Request) Do(s *Server) (*Response, error) {
 	uri := urljoin.Join(s.BaseURI + r.Path)
 
+	reqBody, err := r.PrepareBody()
+	if err != nil {
+		return nil, err
+	}
+
 	client := &http.Client{}
-	req, err := http.NewRequest(r.Method, uri, nil)
+	req, err := http.NewRequest(r.Method, uri, reqBody)
 	if err != nil {
 		return nil, err
 	}
