@@ -108,7 +108,7 @@ func (r Responses) BodySame() error {
 	for i, resp := range r[1:] {
 		if !bytesEqual(resp.Body, r[i].Body) {
 			return fmt.Errorf(
-				"%s: Expected body:\n%s...\nReceived body: \n%s...",
+				"%s:\nExpected body:\n  %s\nReceived body: \n  %s",
 				resp.Request.URL, cutBody(r[i].Body), cutBody(resp.Body))
 		}
 	}
@@ -138,7 +138,10 @@ func cutBody(b []byte) []byte {
 	}
 
 	if len(b) > l {
-		return b[:l]
+		nb := b[:l]
+		nb = append(nb, '.', '.', '.')
+
+		return nb
 	}
 
 	return b
