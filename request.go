@@ -3,27 +3,25 @@ package congruent
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/fardog/congruent/urljoin"
 	"io/ioutil"
 	"net/http"
 	"strings"
 )
 
-// Headers represents HTTP header key/value pairs
-type Headers map[string]string
-
 // NewServer creates a new server definition
-func NewServer(u string, h *Headers) *Server {
+func NewServer(u string, h *http.Header) *Server {
 	return &Server{BaseURI: u, Headers: h}
 }
 
 // Server represents a server that will be requested against
 type Server struct {
 	BaseURI string
-	Headers *Headers
+	Headers *http.Header
 }
 
 // NewRequest creates a new request to be made against a Server
-func NewRequest(m, p string, h *Headers, b interface{}) *Request {
+func NewRequest(m, p string, h *http.Header, b interface{}) *Request {
 	return &Request{m, p, h, b}
 }
 
@@ -31,7 +29,7 @@ func NewRequest(m, p string, h *Headers, b interface{}) *Request {
 type Request struct {
 	Method  string
 	Path    string
-	Headers *Headers
+	Headers *http.Header
 	Body    interface{}
 }
 
@@ -56,7 +54,7 @@ func (r Request) PrepareBody() ([]byte, error) {
 
 // Do performs a Request and returns a Response
 func (r Request) Do(s *Server) (*Response, error) {
-	uri := s.BaseURI + r.Path // TODO(nwittstock): proper path concat
+	uri := urljoin.Join(s.BaseURI + r.Path)
 
 	client := &http.Client{}
 	req, err := http.NewRequest(r.Method, uri, nil)
@@ -64,17 +62,7 @@ func (r Request) Do(s *Server) (*Response, error) {
 		return nil, err
 	}
 
-	if s.Headers != nil {
-		for h, v := range *s.Headers {
-			req.Header.Add(h, v)
-		}
-	}
-
-	if r.Headers != nil {
-		for h, v := range *r.Headers {
-			req.Header.Add(h, v)
-		}
-	}
+	mergeHttpHeaders(&req.Header, s.Headers, r.Headers)
 
 	resp, err := client.Do(req)
 	if err != nil {
