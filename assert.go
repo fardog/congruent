@@ -22,7 +22,8 @@ func (r Responses) StatusEqual(status int) error {
 		if i > 0 {
 			if r[i].StatusCode != status {
 				return fmt.Errorf(
-					"%s: Status was %d, expected %d",
+					"(%s)%s: Status was %d, expected %d",
+					r[i].Request.Method,
 					r[i].Request.URL,
 					r[i].StatusCode,
 					status)
@@ -75,24 +76,27 @@ func (r Responses) headerEqualWithArrayValue(k string, v []string) error {
 					"happens when you fail to check an upstream error before an assertion")
 		}
 		url := resp.Request.URL
+		method := resp.Request.Method
 
 		header := *resp.Headers
 		val, ok := header[k]
 		if !ok {
 			return fmt.Errorf(
-				"%s: Expected header %v to have value %v, was nil", url, k, v)
+				"(%s)%s: Expected header %v to have value %v, was nil",
+				method, url, k, v)
 		}
 
 		if lval, lv := len(val), len(v); lval != lv {
 			return fmt.Errorf(
-				"%s: Expected header %v to have length %v, was %v", url, k, lv, lval)
+				"(%s)%s: Expected header %v to have length %v, was %v",
+				method, url, k, lv, lval)
 		}
 
 		for i, hv := range v {
 			if hv != val[i] {
 				return fmt.Errorf(
-					"%s: Expected header %v to contain value %v at index %v, was %v",
-					url, k, hv, i, val[i])
+					"(%s)%s: Expected header %v to contain value %v at index %v, was %v",
+					method, url, k, hv, i, val[i])
 			}
 		}
 	}
@@ -108,8 +112,8 @@ func (r Responses) BodySame() error {
 	for i, resp := range r[1:] {
 		if !bytesEqual(resp.Body, r[i].Body) {
 			return fmt.Errorf(
-				"%s:\nExpected body:\n  %s\nReceived body: \n  %s",
-				resp.Request.URL, cutBody(r[i].Body), cutBody(resp.Body))
+				"(%s)%s:\nExpected body:\n  %s\nReceived body: \n  %s",
+				resp.Request.Method, resp.Request.URL, cutBody(r[i].Body), cutBody(resp.Body))
 		}
 	}
 
