@@ -1,0 +1,14 @@
+language: go
+
+go:
+  - 1.5
+  - 1.6
+  - tip
+
+install:
+  - go get github.com/fardog/congruent
+  - go get github.com/fardog/congruent/urljoin
+
+script:
+  - go test ./
+  - go test ./urljoin

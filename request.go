@@ -68,7 +68,7 @@ func (r Request) Do(s *Server) (*Response, error) {
 		return nil, err
 	}
 
-	mergeHttpHeaders(&req.Header, s.Headers, r.Headers)
+	mergeHTTPHeaders(&req.Header, s.Headers, r.Headers)
 
 	resp, err := client.Do(req)
 	if err != nil {
