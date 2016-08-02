@@ -4,8 +4,8 @@ A Go utility library for testing that responses from multiple servers are
 equivalent. Useful for regression testing when re-implementing/modifying an
 existing service.
 
-**Note:** This library is very WIP; you should expect _anything and everything_
-to change at any time.
+**Note:** This library is very WIP and **has no tests yet**; you should expect
+_anything and everything_ to change at any time.
 
 ## Install
 
