@@ -14,7 +14,7 @@ func BasicAuth(u, p string) string {
 	return fmt.Sprintf("Basic %s", encoded)
 }
 
-func mergeHttpHeader(dest *http.Header, src *http.Header) {
+func mergeHTTPHeader(dest *http.Header, src *http.Header) {
 	for k, va := range *src {
 		dest.Del(k)
 
@@ -24,10 +24,10 @@ func mergeHttpHeader(dest *http.Header, src *http.Header) {
 	}
 }
 
-func mergeHttpHeaders(dest *http.Header, headers ...*http.Header) {
+func mergeHTTPHeaders(dest *http.Header, headers ...*http.Header) {
 	for _, header := range headers {
 		if header != nil {
-			mergeHttpHeader(dest, header)
+			mergeHTTPHeader(dest, header)
 		}
 	}
 }
