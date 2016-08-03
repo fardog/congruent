@@ -7,8 +7,16 @@ import (
 	"strconv"
 )
 
+// DefaultDiffLength is the default number of bytes that will be returned in a
+// diff. Right now this is only respected for the request Body diff, but may
+// expand to others in the future.
+const DefaultDiffLength = 76
+
+// Responses is an array of Response pointers
 type Responses []*Response
 
+// StatusSame verifies that all responses have the same status codes; returns
+// an error for the first mismatch, if not.
 func (r Responses) StatusSame() error {
 	if len(r) < 1 {
 		return nil
@@ -17,8 +25,10 @@ func (r Responses) StatusSame() error {
 	return r.StatusEqual(r[0].StatusCode)
 }
 
+// StatusEqual verifies that all responses match a given status code; returns an
+// error for the first mismatch, if not.
 func (r Responses) StatusEqual(status int) error {
-	for i, _ := range r {
+	for i := range r {
 		if i > 0 {
 			if r[i].StatusCode != status {
 				return fmt.Errorf(
@@ -34,6 +44,8 @@ func (r Responses) StatusEqual(status int) error {
 	return nil
 }
 
+// HeaderSame verifies that all headers match for all responses; returns an
+// error for the first mismatch, if not.
 func (r Responses) HeaderSame() error {
 	if len(r) < 1 {
 		return nil
@@ -51,6 +63,8 @@ func (r Responses) HeaderSame() error {
 	return nil
 }
 
+// HeaderEqual verifies that a single header of key `k` matches the value `v`;
+// value is expected to be either a `string` or `[]string`.
 func (r *Responses) HeaderEqual(k string, v interface{}) error {
 	switch v.(type) {
 	case []string:
@@ -58,7 +72,7 @@ func (r *Responses) HeaderEqual(k string, v interface{}) error {
 	case string:
 		return r.headerEqualWithStringValue(k, v.(string))
 	default:
-		return fmt.Errorf("Expected string or string array as value")
+		return fmt.Errorf("Expected `string` or `[]string` array as value")
 	}
 }
 
@@ -104,6 +118,12 @@ func (r Responses) headerEqualWithArrayValue(k string, v []string) error {
 	return nil
 }
 
+// BodySame verifies that the response body was identical on all requests;
+// returns an error for the first mismatch if not. This is a bytewise
+// comparison.
+// When an error occurs, the response bodies will be trimmed to
+// `DefaultDiffLength`, but this can be overridden by setting the environment
+// variable `CONGRUENT_MAX_DIFF` to an integer value.
 func (r Responses) BodySame() error {
 	if len(r) < 2 {
 		return nil
@@ -138,7 +158,7 @@ func cutBody(b []byte) []byte {
 	lstr := os.Getenv("CONGRUENT_MAX_DIFF")
 	l, err := strconv.Atoi(lstr)
 	if err != nil {
-		l = 76
+		l = DefaultDiffLength
 	}
 
 	if len(b) > l {
