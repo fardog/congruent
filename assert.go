@@ -1,6 +1,7 @@
 package congruent
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -65,7 +66,7 @@ func (r Responses) HeaderSame() error {
 
 // HeaderEqual verifies that a single header of key `k` matches the value `v`;
 // value is expected to be either a `string` or `[]string`.
-func (r *Responses) HeaderEqual(k string, v interface{}) error {
+func (r Responses) HeaderEqual(k string, v interface{}) error {
 	switch v.(type) {
 	case []string:
 		return r.headerEqualWithArrayValue(k, v.([]string))
@@ -134,6 +135,44 @@ func (r Responses) BodySame() error {
 			return fmt.Errorf(
 				"(%s)%s:\nExpected body:\n  %s\nReceived body: \n  %s",
 				resp.Request.Method, resp.Request.URL, cutBody(r[i].Body), cutBody(resp.Body))
+		}
+	}
+
+	return nil
+}
+
+// BodyContentSame ensures that response bodies are roughly equivalent JSON or
+// strings; no other content types can be expected to be handled appropriately.
+// In here, JSON is Unmarshal'd, Marshal'd, and then compared. This results in
+// only the contents being taken into account, and things like newlines,
+// indentation, and etc being ignored.
+func (r Responses) BodyContentSame() error {
+	var bodies [][]byte
+
+	for i, resp := range r {
+		var body interface{}
+		if resp.Body == nil {
+			bodies = append(bodies, []byte{})
+			continue
+		}
+
+		if err := json.Unmarshal(resp.Body, &body); err != nil {
+			// hacky: if unmarshalling fails, treat as a string
+			fmt.Println(err)
+			bodies = append(bodies, resp.Body)
+			continue
+		}
+
+		b, err := json.Marshal(body)
+		if err != nil {
+			return err
+		}
+		bodies = append(bodies, b)
+
+		if i > 0 && !bytesEqual(b, bodies[i-1]) {
+			return fmt.Errorf(
+				"(%s)%s:\nExpected body:\n  %s\nReceived body: \n  %s",
+				r[i-1].Request.Method, r[i-1].Request.URL, cutBody(bodies[i-1]), cutBody(b))
 		}
 	}
 
