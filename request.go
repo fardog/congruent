@@ -1,3 +1,6 @@
+// Package congruent is a utility library for testing that responses from
+// multiple servers are equivalent. Useful for regression testing when
+// re-implementing/modifying an existing service.
 package congruent
 
 import (
