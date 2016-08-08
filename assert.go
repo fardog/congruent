@@ -30,15 +30,13 @@ func (r Responses) StatusSame() error {
 // error for the first mismatch, if not.
 func (r Responses) StatusEqual(status int) error {
 	for i := range r {
-		if i > 0 {
-			if r[i].StatusCode != status {
-				return fmt.Errorf(
-					"(%s)%s: Status was %d, expected %d",
-					r[i].Request.Method,
-					r[i].Request.URL,
-					r[i].StatusCode,
-					status)
-			}
+		if r[i].StatusCode != status {
+			return fmt.Errorf(
+				"(%s)%s: Status was %d, expected %d",
+				r[i].Request.Method,
+				r[i].Request.URL,
+				r[i].StatusCode,
+				status)
 		}
 	}
 
